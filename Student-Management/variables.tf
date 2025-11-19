@@ -27,5 +27,5 @@
 #variables.tf
 
 variable "displaymsg" {
-    default = "Hello I am a null resource"
+    default = "Hello I am a resource"
 }
