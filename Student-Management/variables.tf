@@ -27,5 +27,5 @@
 #variables.tf
 
 variable "displaymsg" {
-    default = "opaskdhnfikshaddsfasdffbk"
+    default = "opaskdhhaddsfasdffbk"
 }
