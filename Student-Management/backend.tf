@@ -10,10 +10,10 @@ terraform {
 # feel free to change as per your environment.
 
   cloud { 
-    organization = "travis-houston-org" 
+    organization = "Terraform-Labs-2025" 
 
     workspaces { 
-      name = "null-resource-githubactions" 
+      name = "Student-Management-System" 
     } 
   } 
 }
