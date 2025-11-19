@@ -86,6 +86,21 @@ jobs:
       env:
         TF_LOG: ERROR
 
+    # Create a saved plan file and upload it as an artifact for pull requests
+    - name: Terraform Plan (create tfplan for PR)
+      if: github.event_name == 'pull_request'
+      run: terraform plan -input=false -out=tfplan
+      working-directory: Student-Management
+      env:
+        TF_LOG: ERROR
+
+    - name: Upload tfplan artifact
+      if: github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan
+        path: Student-Management/tfplan
+
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false
