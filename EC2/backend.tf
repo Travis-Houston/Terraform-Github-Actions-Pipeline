@@ -1,10 +1,19 @@
-# Configure the AWS Provider
-provider "aws" {
-  region     = "us-east-1"
+terraform { 
+  required_providers {
+    null = {
+      source = "hashicorp/null"
+      version = "3.2.2"
+    }
+  }
 
-  # this is not a best practice to hardcode credentials
-  # but this is a sandbox lab environment
-  # ignore this and use aws cli or environment variables in real world
-  access_key = var.access_key
-  secret_key = var.secret_key
+# Below block is used to specify backed as terraform cloud with organization and workspacename
+# feel free to change as per your environment.
+
+  cloud { 
+    organization = "travis-houston-org" 
+
+    workspaces { 
+      name = "null-resource-githubactions" 
+    } 
+  } 
 }
