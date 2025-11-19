@@ -81,6 +81,7 @@ jobs:
         TF_LOG: ERROR
 
     - name: Terraform Plan
+      type: plan
       run: terraform plan -input=false
       working-directory: Student-Management
       env:
