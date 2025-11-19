@@ -27,5 +27,5 @@
 #variables.tf
 
 variable "displaymsg" {
-    default = "My name is bao"
+    default = "My name is bao huynh"
 }
