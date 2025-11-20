@@ -61,54 +61,58 @@ jobs:
         id: ws-name
         run: |
           FOLDER="${{ matrix.folder }}"
-          # Get the last part of the path
+          # Get the last part of the path (e.g., "prod" from "infra/prod")
           CLEAN_NAME=$(basename "$FOLDER")
           echo "workspace=$CLEAN_NAME" >> "$GITHUB_OUTPUT"
 
-      # --- FIX START: Auto-create workspace if missing ---
-      - name: Ensure Workspace Exists
+      # --- ENHANCED STEP: Ensure Workspace & Enforce Config ---
+      - name: Ensure Workspace & Configuration
         env:
           TF_TOKEN: ${{ secrets.TF_API_TOKEN }}
           ORG: ${{ env.TF_CLOUD_ORGANIZATION }}
           WS: ${{ steps.ws-name.outputs.workspace }}
+          # Pass the folder to set as Working Directory
+          FOLDER_PATH: ${{ matrix.folder }}
         run: |
-          echo "Checking if workspace '$WS' exists in org '$ORG'..."
-          
-          # 1. Check existence (returns 200 if found, 404 if not)
+          echo "Checking configuration for workspace '$WS'..."
+
+          # 1. Check if workspace exists
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $TF_TOKEN" \
             -H "Content-Type: application/vnd.api+json" \
             "https://app.terraform.io/api/v2/organizations/$ORG/workspaces/$WS")
 
+          # 2. Create if missing
           if [ "$HTTP_STATUS" -eq 404 ]; then
             echo "Workspace not found. Creating '$WS'..."
-            
-            # Ensure jq is available to safely build JSON payload
-            sudo apt-get update -y && sudo apt-get install -y jq
-
-            # Build payload.json using jq to avoid heredoc indentation problems
-            jq -n --arg name "$WS" '{
-              data: {
-                attributes: {
-                  name: $name,
-                  ("execution-mode"): "remote"
-                },
-                type: "workspaces"
-              }
-            }' > payload.json
-
-            # 3. Create Workspace via API
+            # Default creation with remote execution
             curl -s -f -X POST \
               -H "Authorization: Bearer $TF_TOKEN" \
               -H "Content-Type: application/vnd.api+json" \
-              -d @payload.json \
+              -d "{\"data\":{\"attributes\":{\"name\":\"$WS\",\"execution-mode\":\"remote\"},\"type\":\"workspaces\"}}" \
               "https://app.terraform.io/api/v2/organizations/$ORG/workspaces"
-              
-            echo "Workspace '$WS' created successfully."
-          else
-            echo "Workspace '$WS' already exists."
+            echo "Workspace created."
           fi
-      # --- FIX END ---
+
+          # 3. Enforce Configuration (Auto-Apply, Console UI, Working Directory)
+          echo "Enforcing settings: Auto-Apply=True, Console UI=True, WD=$FOLDER_PATH"
+          
+          # Build JSON payload with jq
+          # - auto-apply: true
+          # - structured-run-output-enabled: false (This enables Console UI)
+          # - working-directory: current folder path
+          PAYLOAD=$(jq -n \
+            --arg wd "$FOLDER_PATH" \
+            '{data: {type: "workspaces", attributes: {"auto-apply": true, "structured-run-output-enabled": false, "working-directory": $wd}}}')
+
+          # Send PATCH request to update settings
+          curl -s -f -X PATCH \
+            -H "Authorization: Bearer $TF_TOKEN" \
+            -H "Content-Type: application/vnd.api+json" \
+            -d "$PAYLOAD" \
+            "https://app.terraform.io/api/v2/organizations/$ORG/workspaces/$WS"
+
+          echo "Configuration successfully enforced."
 
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
