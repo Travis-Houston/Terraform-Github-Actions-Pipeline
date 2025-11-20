@@ -65,6 +65,50 @@ jobs:
           CLEAN_NAME=$(basename "$FOLDER")
           echo "workspace=$CLEAN_NAME" >> "$GITHUB_OUTPUT"
 
+      # --- FIX START: Auto-create workspace if missing ---
+      - name: Ensure Workspace Exists
+        env:
+          TF_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          ORG: ${{ env.TF_CLOUD_ORGANIZATION }}
+          WS: ${{ steps.ws-name.outputs.workspace }}
+        run: |
+          echo "Checking if workspace '$WS' exists in org '$ORG'..."
+          
+          # 1. Check existence (returns 200 if found, 404 if not)
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TF_TOKEN" \
+            -H "Content-Type: application/vnd.api+json" \
+            "https://app.terraform.io/api/v2/organizations/$ORG/workspaces/$WS")
+
+          if [ "$HTTP_STATUS" -eq 404 ]; then
+            echo "Workspace not found. Creating '$WS'..."
+            
+            # 2. Create Payload
+            cat > payload.json <<EOF
+            {
+              "data": {
+                "attributes": {
+                  "name": "$WS",
+                  "execution-mode": "remote" 
+                },
+                "type": "workspaces"
+              }
+            }
+            EOF
+
+            # 3. Create Workspace via API
+            curl -s -f -X POST \
+              -H "Authorization: Bearer $TF_TOKEN" \
+              -H "Content-Type: application/vnd.api+json" \
+              -d @payload.json \
+              "https://app.terraform.io/api/v2/organizations/$ORG/workspaces"
+              
+            echo "Workspace '$WS' created successfully."
+          else
+            echo "Workspace '$WS' already exists."
+          fi
+      # --- FIX END ---
+
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
         id: apply-upload
