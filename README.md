@@ -9,10 +9,10 @@
 <em></em>
 
 <!-- BADGES -->
-<img src="https://img.shields.io/github/license/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
-<img src="https://img.shields.io/github/last-commit/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&logo=git&logoColor=white&color=0080ff" alt="last-commit">
-<img src="https://img.shields.io/github/languages/top/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&color=0080ff" alt="repo-top-language">
-<img src="https://img.shields.io/github/languages/count/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&color=0080ff" alt="repo-language-count">
+<img src="https://img.shields.io/github/license/Travis-Houston/Terraform-Github-Actions-Pipeline?style=default&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
+<img src="https://img.shields.io/github/last-commit/Travis-Houston/Terraform-Github-Actions-Pipeline?style=default&logo=git&logoColor=white&color=0080ff" alt="last-commit">
+<img src="https://img.shields.io/github/languages/top/Travis-Houston/Terraform-Github-Actions-Pipeline?style=default&color=0080ff" alt="repo-top-language">
+<img src="https://img.shields.io/github/languages/count/Travis-Houston/Terraform-Github-Actions-Pipeline?style=default&color=0080ff" alt="repo-language-count">
 
 </div>
 <br>
@@ -58,7 +58,7 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
 ## Project Structure
 
 ```sh
-└── IaC-Automation-with-Github-Actions-and-Terraform.git/
+ Terraform-Github-Actions-Pipeline/
     ├── .github
     │   └── workflows
     │       ├── terraform-apply.yaml    # Automated deployment workflow
@@ -76,7 +76,7 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
 ### Project Index
 
 <details open>
-	<summary><b><code>IAC-AUTOMATION-WITH-GITHUB-ACTIONS-AND-TERRAFORM.GIT/</code></b></summary>
+	<summary><b><code>Terraform-Github-Actions-Pipeline/</code></b></summary>
 	<!-- Template -->
     <details>
         <summary><b>Template</b></summary>
@@ -91,31 +91,31 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
                 </tr>
             </thead>
                 <tr style='border-bottom: 1px solid #eee;'>
-                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/network.tf'>network.tf</a></b></td>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/Template/network.tf'>network.tf</a></b></td>
                     <td style='padding: 8px;'><code>❯ Defines VPC, subnets, internet gateway, and routing tables for network infrastructure</code></td>
                 </tr>
                 <tr style='border-bottom: 1px solid #eee;'>
-                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/.terraformignore'>.terraformignore</a></b></td>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/Template/.terraformignore'>.terraformignore</a></b></td>
                     <td style='padding: 8px;'><code>❯ Specifies files and directories to exclude from Terraform configuration uploads</code></td>
                 </tr>
                 <tr style='border-bottom: 1px solid #eee;'>
-                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/main.tf'>main.tf</a></b></td>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/Template/main.tf'>main.tf</a></b></td>
                     <td style='padding: 8px;'><code>❯ Core infrastructure resources including compute instances, storage, and application services</code></td>
                 </tr>
                 <tr style='border-bottom: 1px solid #eee;'>
-                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/variables.tf'>variables.tf</a></b></td>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/Template/variables.tf'>variables.tf</a></b></td>
                     <td style='padding: 8px;'><code>❯ Input variable definitions for customizing infrastructure deployment parameters</code></td>
                 </tr>
                 <tr style='border-bottom: 1px solid #eee;'>
-                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/output.tf'>output.tf</a></b></td>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/Template/output.tf'>output.tf</a></b></td>
                     <td style='padding: 8px;'><code>❯ Output values exposing resource attributes for external consumption and reference</code></td>
                 </tr>
                 <tr style='border-bottom: 1px solid #eee;'>
-                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/provider.tf'>provider.tf</a></b></td>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/Template/provider.tf'>provider.tf</a></b></td>
                     <td style='padding: 8px;'><code>❯ Cloud provider configuration and authentication settings for Terraform operations</code></td>
                 </tr>
                 <tr style='border-bottom: 1px solid #eee;'>
-                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/backend.tf'>backend.tf</a></b></td>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/Template/backend.tf'>backend.tf</a></b></td>
                     <td style='padding: 8px;'><code>❯ Remote state backend configuration for Terraform Cloud workspace integration</code></td>
                 </tr>
             </table>
@@ -141,11 +141,11 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
                         </tr>
                     </thead>
                         <tr style='border-bottom: 1px solid #eee;'>
-                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/.github/workflows/terraform-apply.yaml'>terraform-apply.yaml</a></b></td>
+                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-apply.yaml'>terraform-apply.yaml</a></b></td>
                             <td style='padding: 8px;'><code>❯ Automated deployment workflow that applies Terraform changes to infrastructure on main branch merges</code></td>
                         </tr>
                         <tr style='border-bottom: 1px solid #eee;'>
-                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/.github/workflows/terraform-plan.yaml'>terraform-plan.yaml</a></b></td>
+                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-plan.yaml'>terraform-plan.yaml</a></b></td>
                             <td style='padding: 8px;'><code>❯ Pull request workflow that validates and generates Terraform execution plans for infrastructure changes</code></td>
                         </tr>
                     </table>
@@ -273,9 +273,9 @@ Required secrets:
 
 ## Contributing
 
-- **💬 [Join the Discussions](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/discussions)**: Share your insights, provide feedback, or ask questions.
-- **🐛 [Report Issues](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/issues)**: Submit bugs found or log feature requests for the `IaC-Automation-with-Github-Actions-and-Terraform.git` project.
-- **💡 [Submit Pull Requests](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
+- **💬 [Join the Discussions](https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/discussions)**: Share your insights, provide feedback, or ask questions.
+- **🐛 [Report Issues](https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/issues)**: Submit bugs found or log feature requests for the `Terraform-Github-Actions-Pipeline` project.
+- **💡 [Submit Pull Requests](https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
 
 <details closed>
 <summary>Contributing Guidelines</summary>
@@ -283,7 +283,7 @@ Required secrets:
 1. **Fork the Repository**: Start by forking the project repository to your github account.
 2. **Clone Locally**: Clone the forked repository to your local machine using a git client.
    ```sh
-   git clone https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git
+   git clone https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline
    ```
 3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
    ```sh
@@ -306,8 +306,8 @@ Required secrets:
 <summary>Contributor Graph</summary>
 <br>
 <p align="left">
-   <a href="https://github.com{/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/}graphs/contributors">
-      <img src="https://contrib.rocks/image?repo=Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git">
+   <a href="https://github.com{/Travis-Houston/Terraform-Github-Actions-Pipeline/}graphs/contributors">
+      <img src="https://contrib.rocks/image?repo=Travis-Houston/Terraform-Github-Actions-Pipeline">
    </a>
 </p>
 </details>
@@ -332,8 +332,8 @@ This project is protected under the [MIT License](https://choosealicense.com/lic
 ## Contact Information
 
 - **Project Owner**: Travis Houston
-- **Repository**: [IaC-Automation-with-Github-Actions-and-Terraform](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git)
-- **Issues**: [Report a bug or request a feature](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/issues)
+- **Repository**: [IaC-Automation-with-Github-Actions-and-Terraform](https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline)
+- **Issues**: [Report a bug or request a feature](https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/issues)
 
 For questions or support, please open an issue in the repository or reach out through GitHub discussions.
 
