@@ -6,72 +6,102 @@ on:
 env:
   TF_CLOUD_ORGANIZATION: "Terraform-Labs-2025"
   TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
-  TF_WORKSPACE: "Student-Management-System"
-  CONFIG_DIRECTORY: "./"
 
 jobs:
-  terraform:
-    if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
-    name: "Terraform Plan"
+  # JOB 1: Detect Changed Folders
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+
+      - name: Get changed directories
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          dir_names: true
+          dir_names_max_depth: 2 # Adjust based on how deep your tf folders are
+          json: true
+          files: |
+            **/*.tf
+            **/*.hcl
+
+      - name: Set Matrix
+        id: set-matrix
+        run: |
+          if [[ -z "${{ steps.changed-files.outputs.all_changed_files }}" ]]; then
+            echo "matrix=[]" >> "$GITHUB_OUTPUT"
+          else
+            echo "matrix=${{ steps.changed-files.outputs.all_changed_files }}" >> "$GITHUB_OUTPUT"
+          fi
+
+  # JOB 2: Run Plan (Parallel Matrix)
+  terraform-plan:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.matrix != '[]' && needs.detect-changes.outputs.matrix != '' }}
+    name: "Plan - ${{ matrix.folder }}"
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
+      # Sanitize folder name to create a clean Workspace Name
+      # e.g. "infrastructure/vpc" -> "vpc"
+      - name: Get Workspace Name
+        id: ws-name
+        run: |
+          FOLDER="${{ matrix.folder }}"
+          # Get the last part of the path
+          CLEAN_NAME=$(basename "$FOLDER")
+          echo "workspace=$CLEAN_NAME" >> "$GITHUB_OUTPUT"
+
       - name: Upload Configuration
-        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0
+        uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
         id: plan-upload
         with:
-          workspace: ${{ env.TF_WORKSPACE }}
-          directory: ${{ env.CONFIG_DIRECTORY }}
+          # Dynamic Workspace and Directory
+          workspace: ${{ steps.ws-name.outputs.workspace }}
+          directory: ${{ matrix.folder }}
           speculative: true
 
       - name: Create Plan Run
-        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.0.0
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.4
         id: plan-run
         with:
-          workspace: ${{ env.TF_WORKSPACE }}
+          workspace: ${{ steps.ws-name.outputs.workspace }}
           configuration_version: ${{ steps.plan-upload.outputs.configuration_version_id }}
           plan_only: true
 
       - name: Get Plan Output
-        uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.0.0
+        uses: hashicorp/tfc-workflows-github/actions/plan-output@v1.3.4
         id: plan-output
         with:
           plan: ${{ fromJSON(steps.plan-run.outputs.payload).data.relationships.plan.data.id }}
 
       - name: Update PR
         uses: actions/github-script@v6
-        id: plan-comment
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            // 1. Retrieve existing bot comments for the PR
-            const { data: comments } = await github.rest.issues.listComments({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-            });
-            const botComment = comments.find(comment => {
-              return comment.user.type === 'Bot' && comment.body.includes('Terraform Cloud Plan Output')
-            });
-            const output = `#### Terraform Cloud Plan Output
-               \`\`\`
-               Plan: ${{ steps.plan-output.outputs.add }} to add, ${{ steps.plan-output.outputs.change }} to change, ${{ steps.plan-output.outputs.destroy }} to destroy.
-               \`\`\`
-               [Terraform Cloud Plan](${{ steps.plan-run.outputs.run_link }})
-               `;
-            // 3. Delete previous comment so PR timeline makes sense
-            if (botComment) {
-              github.rest.issues.deleteComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: botComment.id,
-              });
-            }
+            const output = `#### Terraform Cloud Plan: \`${{ steps.ws-name.outputs.workspace }}\`
+            \`\`\`
+            Plan: ${{ steps.plan-output.outputs.add }} to add, ${{ steps.plan-output.outputs.change }} to change, ${{ steps.plan-output.outputs.destroy }} to destroy.
+            \`\`\`
+            [View Run in Terraform Cloud](${{ steps.plan-run.outputs.run_link }})
+            `;
+            
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
