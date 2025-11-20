@@ -1,19 +1,12 @@
-<div id="top">
-
-<!-- HEADER STYLE: CLASSIC -->
-<div align="center">
-
-<img src="readmeai/assets/logos/purple.svg" width="30%" style="position: relative; top: 0; right: 0;" alt="Project Logo"/>
-
 # IAC-AUTOMATION-WITH-GITHUB-ACTIONS-AND-TERRAFORM.GIT
 
 <em></em>
 
 <!-- BADGES -->
-<img src="https://img.shields.io/github/license/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
-<img src="https://img.shields.io/github/last-commit/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&logo=git&logoColor=white&color=0080ff" alt="last-commit">
-<img src="https://img.shields.io/github/languages/top/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&color=0080ff" alt="repo-top-language">
-<img src="https://img.shields.io/github/languages/count/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git?style=default&color=0080ff" alt="repo-language-count">
+<img src="https://img.shields.io/github/license/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform?style=default&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
+<img src="https://img.shields.io/github/last-commit/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform?style=default&logo=git&logoColor=white&color=0080ff" alt="last-commit">
+<img src="https://img.shields.io/github/languages/top/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform?style=default&color=0080ff" alt="repo-top-language">
+<img src="https://img.shields.io/github/languages/count/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform?style=default&color=0080ff" alt="repo-language-count">
 
 </div>
 <br>
