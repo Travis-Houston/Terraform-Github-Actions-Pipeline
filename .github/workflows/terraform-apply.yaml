@@ -29,51 +29,76 @@ jobs:
           workspace: ${{ env.TF_WORKSPACE }}
           directory: ${{ env.CONFIG_DIRECTORY }}
 
-      - name: Create Apply Run (Terraform Cloud API, no wait)
+      # - name: Create Apply Run
+      #   id: create-run
+      #   env:
+      #     TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
+      #     TF_CLOUD_ORGANIZATION: ${{ env.TF_CLOUD_ORGANIZATION }}
+      #     TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
+      #   run: |
+      #     set -euo pipefail
+      #     CV_ID="${{ steps.apply-upload.outputs.configuration_version_id }}"
+      #     echo "Configuration version: $CV_ID"
+
+      #     # get workspace id
+      #     WS_JSON=$(curl -sS -H "Authorization: Bearer $TF_API_TOKEN" \
+      #       -H "Content-Type: application/vnd.api+json" \
+      #       "https://app.terraform.io/api/v2/organizations/${TF_CLOUD_ORGANIZATION}/workspaces/${TF_WORKSPACE}")
+      #     WS_ID=$(python -c "import sys,json;print(json.load(sys.stdin)['data']['id'])" <<<"$WS_JSON")
+      #     echo "Workspace id: $WS_ID"
+
+      #     # create run payload and POST (this creates the run then returns immediately)
+      #     cat > /tmp/run_payload.json <<EOF
+      #     {
+      #       "data": {
+      #         "attributes": {
+      #           "message": "Run created by GitHub Actions"
+      #         },
+      #         "type": "runs",
+      #         "relationships": {
+      #           "workspace": {
+      #             "data": { "type": "workspaces", "id": "$WS_ID" }
+      #           },
+      #           "configuration-version": {
+      #             "data": { "type": "configuration-versions", "id": "$CV_ID" }
+      #           }
+      #         }
+      #       }
+      #     }
+      #     EOF
+
+      #     RESPONSE=$(curl -sS -X POST -H "Authorization: Bearer $TF_API_TOKEN" \
+      #       -H "Content-Type: application/vnd.api+json" \
+      #       -d @/tmp/run_payload.json \
+      #       "https://app.terraform.io/api/v2/runs")
+
+      #     RUN_ID=$(python -c "import sys,json;print(json.load(sys.stdin)['data']['id'])" <<<"$RESPONSE")
+      #     echo "Created run: $RUN_ID"
+
+      #     # expose run_id to following steps
+      #     echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Create Apply Run
         id: create-run
         env:
-          TF_API_TOKEN: ${{ secrets.TF_API_TOKEN }}
-          TF_CLOUD_ORGANIZATION: ${{ env.TF_CLOUD_ORGANIZATION }}
-          TF_WORKSPACE: ${{ env.TF_WORKSPACE }}
+          TF_TOKEN: ${{ secrets.TF_API_TOKEN }}
+          ORG: ${{ env.TF_CLOUD_ORGANIZATION }}
+          WS: ${{ env.TF_WORKSPACE }}
+          CV_ID: ${{ steps.apply-upload.outputs.configuration_version_id }}
         run: |
-          set -euo pipefail
-          CV_ID="${{ steps.apply-upload.outputs.configuration_version_id }}"
-          echo "Configuration version: $CV_ID"
-
-          # get workspace id
-          WS_JSON=$(curl -sS -H "Authorization: Bearer $TF_API_TOKEN" \
+          # 1. Get Workspace ID
+          WS_ID=$(curl -s -H "Authorization: Bearer $TF_TOKEN" \
             -H "Content-Type: application/vnd.api+json" \
-            "https://app.terraform.io/api/v2/organizations/${TF_CLOUD_ORGANIZATION}/workspaces/${TF_WORKSPACE}")
-          WS_ID=$(python -c "import sys,json;print(json.load(sys.stdin)['data']['id'])" <<<"$WS_JSON")
-          echo "Workspace id: $WS_ID"
+            "https://app.terraform.io/api/v2/organizations/$ORG/workspaces/$WS" | jq -r '.data.id')
+          
+          # 2. Create Run Payload
+          PAYLOAD=$(jq -n --arg ws "$WS_ID" --arg cv "$CV_ID" \
+            '{data: {type: "runs", attributes: {message: "GH Actions Run"}, relationships: {workspace: {data: {type: "workspaces", id: $ws}}, "configuration-version": {data: {type: "configuration-versions", id: $cv}}}}}')
 
-          # create run payload and POST (this creates the run then returns immediately)
-          cat > /tmp/run_payload.json <<EOF
-          {
-            "data": {
-              "attributes": {
-                "message": "Run created by GitHub Actions"
-              },
-              "type": "runs",
-              "relationships": {
-                "workspace": {
-                  "data": { "type": "workspaces", "id": "$WS_ID" }
-                },
-                "configuration-version": {
-                  "data": { "type": "configuration-versions", "id": "$CV_ID" }
-                }
-              }
-            }
-          }
-          EOF
-
-          RESPONSE=$(curl -sS -X POST -H "Authorization: Bearer $TF_API_TOKEN" \
+          # 3. POST and get Run ID
+          RUN_ID=$(curl -s -X POST -H "Authorization: Bearer $TF_TOKEN" \
             -H "Content-Type: application/vnd.api+json" \
-            -d @/tmp/run_payload.json \
-            "https://app.terraform.io/api/v2/runs")
+            -d "$PAYLOAD" "https://app.terraform.io/api/v2/runs" | jq -r '.data.id')
 
-          RUN_ID=$(python -c "import sys,json;print(json.load(sys.stdin)['data']['id'])" <<<"$RESPONSE")
           echo "Created run: $RUN_ID"
-
-          # expose run_id to following steps
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"

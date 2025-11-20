@@ -27,5 +27,5 @@
 #variables.tf
 
 variable "displaymsg" {
-    default = "berodd"
+    default = "bero lmao"
 }
