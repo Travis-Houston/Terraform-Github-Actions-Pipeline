@@ -57,13 +57,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Get Workspace Name
+      # --- UPDATED STEP: Extract Name from Code (backend.tf) ---
+      - name: Get Workspace Name from Config
         id: ws-name
         run: |
-          FOLDER="${{ matrix.folder }}"
-          # Get the last part of the path (e.g., "prod" from "infra/prod")
-          CLEAN_NAME=$(basename "$FOLDER")
-          echo "workspace=$CLEAN_NAME" >> "$GITHUB_OUTPUT"
+          cd "${{ matrix.folder }}"
+          
+          # 1. Find the .tf file containing the 'workspaces {' block
+          CONFIG_FILE=$(grep -l "workspaces[[:space:]]*{" *.tf | head -n 1)
+          
+          if [ -n "$CONFIG_FILE" ]; then
+             echo "Found backend configuration in: $CONFIG_FILE"
+             
+             # 2. Extract the value inside name = "VALUE"
+             # Regex finds 'name = "..."' and captures the text inside quotes
+             WS_NAME=$(grep -E 'name[[:space:]]*=[[:space:]]*"[^"]+"' "$CONFIG_FILE" | head -n 1 | sed -E 's/.*name[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          fi
+
+          # 3. Fallback: If not found in code, use folder name
+          if [ -z "$WS_NAME" ]; then
+             echo "WARNING: Could not extract workspace name from .tf files. Defaulting to folder name."
+             WS_NAME=$(basename "${{ matrix.folder }}")
+          fi
+          
+          echo "Detected Workspace: $WS_NAME"
+          echo "workspace=$WS_NAME" >> "$GITHUB_OUTPUT"
 
       # --- ENHANCED STEP: Ensure Workspace & Enforce Config ---
       - name: Ensure Workspace & Configuration
@@ -71,7 +89,6 @@ jobs:
           TF_TOKEN: ${{ secrets.TF_API_TOKEN }}
           ORG: ${{ env.TF_CLOUD_ORGANIZATION }}
           WS: ${{ steps.ws-name.outputs.workspace }}
-          # Pass the folder to set as Working Directory
           FOLDER_PATH: ${{ matrix.folder }}
         run: |
           echo "Checking configuration for workspace '$WS'..."
@@ -85,7 +102,6 @@ jobs:
           # 2. Create if missing
           if [ "$HTTP_STATUS" -eq 404 ]; then
             echo "Workspace not found. Creating '$WS'..."
-            # Default creation with remote execution
             curl -s -f -X POST \
               -H "Authorization: Bearer $TF_TOKEN" \
               -H "Content-Type: application/vnd.api+json" \
@@ -97,15 +113,10 @@ jobs:
           # 3. Enforce Configuration (Auto-Apply, Console UI, Working Directory)
           echo "Enforcing settings: Auto-Apply=True, Console UI=True, WD=$FOLDER_PATH"
           
-          # Build JSON payload with jq
-          # - auto-apply: true
-          # - structured-run-output-enabled: false (This enables Console UI)
-          # - working-directory: current folder path
           PAYLOAD=$(jq -n \
             --arg wd "$FOLDER_PATH" \
             '{data: {type: "workspaces", attributes: {"auto-apply": true, "structured-run-output-enabled": false, "working-directory": $wd}}}')
 
-          # Send PATCH request to update settings
           curl -s -f -X PATCH \
             -H "Authorization: Bearer $TF_TOKEN" \
             -H "Content-Type: application/vnd.api+json" \
@@ -118,7 +129,6 @@ jobs:
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
         id: plan-upload
         with:
-          # Dynamic Workspace and Directory
           workspace: ${{ steps.ws-name.outputs.workspace }}
           directory: ${{ matrix.folder }}
           speculative: true
