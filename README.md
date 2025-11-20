@@ -79,66 +79,50 @@ The project showcases enterprise-grade infrastructure management with automated 
 
 <details open>
 	<summary><b><code>IAC-AUTOMATION-WITH-GITHUB-ACTIONS-AND-TERRAFORM.GIT/</code></b></summary>
-	<!-- __root__ Submodule -->
-	<details>
-		<summary><b>__root__</b></summary>
-		<blockquote>
-			<div class='directory-path' style='padding: 8px 0; color: #666;'>
-				<code><b>⦿ __root__</b></code>
-			<table style='width: 100%; border-collapse: collapse;'>
-			<thead>
-				<tr style='background-color: #f8f9fa;'>
-					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
-					<th style='text-align: left; padding: 8px;'>Summary</th>
-				</tr>
-			</thead>
-			</table>
-		</blockquote>
-	</details>
 	<!-- Template -->
-	<details>
-		<summary><b>Template</b></summary>
-		<blockquote>
-			<div class='directory-path' style='padding: 8px 0; color: #666;'>
-				<code><b>Template</b></code>
-			<table style='width: 100%; border-collapse: collapse;'>
-			<thead>
-				<tr style='background-color: #f8f9fa;'>
-					<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
-					<th style='text-align: left; padding: 8px;'>Summary</th>
-				</tr>
-			</thead>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/network.tf'>network.tf</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/.terraformignore'>.terraformignore</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/main.tf'>main.tf</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/variables.tf'>variables.tf</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/output.tf'>output.tf</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/provider.tf'>provider.tf</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-				<tr style='border-bottom: 1px solid #eee;'>
-					<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/backend.tf'>backend.tf</a></b></td>
-					<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-				</tr>
-			</table>
-		</blockquote>
-	</details>
+    <details>
+        <summary><b>Template</b></summary>
+        <blockquote>
+            <div class='directory-path' style='padding: 8px 0; color: #666;'>
+                <code><b>Template</b></code>
+            <table style='width: 100%; border-collapse: collapse;'>
+            <thead>
+                <tr style='background-color: #f8f9fa;'>
+                    <th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+                    <th style='text-align: left; padding: 8px;'>Summary</th>
+                </tr>
+            </thead>
+                <tr style='border-bottom: 1px solid #eee;'>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/network.tf'>network.tf</a></b></td>
+                    <td style='padding: 8px;'><code>❯ Defines VPC, subnets, internet gateway, and routing tables for network infrastructure</code></td>
+                </tr>
+                <tr style='border-bottom: 1px solid #eee;'>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/.terraformignore'>.terraformignore</a></b></td>
+                    <td style='padding: 8px;'><code>❯ Specifies files and directories to exclude from Terraform configuration uploads</code></td>
+                </tr>
+                <tr style='border-bottom: 1px solid #eee;'>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/main.tf'>main.tf</a></b></td>
+                    <td style='padding: 8px;'><code>❯ Core infrastructure resources including compute instances, storage, and application services</code></td>
+                </tr>
+                <tr style='border-bottom: 1px solid #eee;'>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/variables.tf'>variables.tf</a></b></td>
+                    <td style='padding: 8px;'><code>❯ Input variable definitions for customizing infrastructure deployment parameters</code></td>
+                </tr>
+                <tr style='border-bottom: 1px solid #eee;'>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/output.tf'>output.tf</a></b></td>
+                    <td style='padding: 8px;'><code>❯ Output values exposing resource attributes for external consumption and reference</code></td>
+                </tr>
+                <tr style='border-bottom: 1px solid #eee;'>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/provider.tf'>provider.tf</a></b></td>
+                    <td style='padding: 8px;'><code>❯ Cloud provider configuration and authentication settings for Terraform operations</code></td>
+                </tr>
+                <tr style='border-bottom: 1px solid #eee;'>
+                    <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/Template/backend.tf'>backend.tf</a></b></td>
+                    <td style='padding: 8px;'><code>❯ Remote state backend configuration for Terraform Cloud workspace integration</code></td>
+                </tr>
+            </table>
+        </blockquote>
+    </details>
 	<!-- .github Submodule -->
 	<details>
 		<summary><b>.github</b></summary>
@@ -146,29 +130,29 @@ The project showcases enterprise-grade infrastructure management with automated 
 			<div class='directory-path' style='padding: 8px 0; color: #666;'>
 				<code><b>⦿ .github</b></code>
 			<!-- workflows Submodule -->
-			<details>
-				<summary><b>workflows</b></summary>
-				<blockquote>
-					<div class='directory-path' style='padding: 8px 0; color: #666;'>
-						<code><b>⦿ .github.workflows</b></code>
-					<table style='width: 100%; border-collapse: collapse;'>
-					<thead>
-						<tr style='background-color: #f8f9fa;'>
-							<th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
-							<th style='text-align: left; padding: 8px;'>Summary</th>
-						</tr>
-					</thead>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/.github/workflows/terraform-apply.yaml'>terraform-apply.yaml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-						<tr style='border-bottom: 1px solid #eee;'>
-							<td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/.github/workflows/terraform-plan.yaml'>terraform-plan.yaml</a></b></td>
-							<td style='padding: 8px;'>Code>❯ REPLACE-ME</code></td>
-						</tr>
-					</table>
-				</blockquote>
-			</details>
+            <details>
+                <summary><b>workflows</b></summary>
+                <blockquote>
+                    <div class='directory-path' style='padding: 8px 0; color: #666;'>
+                        <code><b>⦿ .github.workflows</b></code>
+                    <table style='width: 100%; border-collapse: collapse;'>
+                    <thead>
+                        <tr style='background-color: #f8f9fa;'>
+                            <th style='width: 30%; text-align: left; padding: 8px;'>File Name</th>
+                            <th style='text-align: left; padding: 8px;'>Summary</th>
+                        </tr>
+                    </thead>
+                        <tr style='border-bottom: 1px solid #eee;'>
+                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/.github/workflows/terraform-apply.yaml'>terraform-apply.yaml</a></b></td>
+                            <td style='padding: 8px;'><code>❯ Automated deployment workflow that applies Terraform changes to infrastructure on main branch merges</code></td>
+                        </tr>
+                        <tr style='border-bottom: 1px solid #eee;'>
+                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/blob/master/.github/workflows/terraform-plan.yaml'>terraform-plan.yaml</a></b></td>
+                            <td style='padding: 8px;'><code>❯ Pull request workflow that validates and generates Terraform execution plans for infrastructure changes</code></td>
+                        </tr>
+                    </table>
+                </blockquote>
+            </details>
 		</blockquote>
 	</details>
 </details>
