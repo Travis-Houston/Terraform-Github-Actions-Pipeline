@@ -345,7 +345,6 @@ This project is protected under the [MIT License](https://choosealicense.com/lic
 - **Project Owner**: Travis Houston
 - **Repository**: [IaC-Automation-with-Github-Actions-and-Terraform](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git)
 - **Issues**: [Report a bug or request a feature](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/issues)
-- **Discussions**: [Join the conversation](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git/discussions)
 
 For questions or support, please open an issue in the repository or reach out through GitHub discussions.
 
