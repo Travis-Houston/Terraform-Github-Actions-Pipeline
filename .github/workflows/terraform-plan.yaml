@@ -83,18 +83,19 @@ jobs:
           if [ "$HTTP_STATUS" -eq 404 ]; then
             echo "Workspace not found. Creating '$WS'..."
             
-            # 2. Create Payload
-            cat > payload.json <<EOF
-            {
-              "data": {
-                "attributes": {
-                  "name": "$WS",
-                  "execution-mode": "remote" 
+            # Ensure jq is available to safely build JSON payload
+            sudo apt-get update -y && sudo apt-get install -y jq
+
+            # Build payload.json using jq to avoid heredoc indentation problems
+            jq -n --arg name "$WS" '{
+              data: {
+                attributes: {
+                  name: $name,
+                  ("execution-mode"): "remote"
                 },
-                "type": "workspaces"
+                type: "workspaces"
               }
-            }
-            EOF
+            }' > payload.json
 
             # 3. Create Workspace via API
             curl -s -f -X POST \
