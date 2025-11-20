@@ -1,3 +1,9 @@
+<div id="top">
+
+<!-- HEADER STYLE: CLASSIC -->
+<div align="center">
+
+
 # IAC-AUTOMATION-WITH-GITHUB-ACTIONS-AND-TERRAFORM.GIT
 
 <em></em>
