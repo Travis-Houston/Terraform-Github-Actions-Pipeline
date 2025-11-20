@@ -6,13 +6,13 @@ on:
       - main
 
 # 1. Concurrency: Ensures we don't run parallel applies on the same branch
+# cancel-in-progress: false is CRITICAL here. We don't want to kill an active Apply.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
 
 env:
   TF_CLOUD_ORGANIZATION: "Terraform-Labs-2025"
-  TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
 
 jobs:
   # JOB 1: Detect Changed Folders
@@ -35,7 +35,6 @@ jobs:
           dir_names: true
           dir_names_max_depth: 2
           json: true
-          # Exclude hidden files or unrelated configs
           files: |
              **/*.tf
              **/*.hcl
@@ -46,23 +45,24 @@ jobs:
       - name: Set Matrix
         id: set-matrix
         run: |
-          # Default to empty array to prevent JSON parse errors in next job
           echo "matrix=${{ steps.changed-files.outputs.all_changed_files || '[]' }}" >> "$GITHUB_OUTPUT"
 
   # JOB 2: Apply (Parallel Matrix)
   terraform-apply:
     needs: detect-changes
-    # Only run if the array is not empty
     if: ${{ needs.detect-changes.outputs.matrix != '[]' }}
     name: "Apply - ${{ matrix.folder }}"
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # id-token: write # Uncomment if you switch to OIDC later
     strategy:
-      fail-fast: false # If one folder fails, let others continue
+      fail-fast: false
       matrix:
         folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    
+    # Security: Only expose the token to this specific job
+    env:
+      TF_API_TOKEN: "${{ secrets.TF_API_TOKEN }}"
 
     steps:
       - name: Checkout
@@ -73,12 +73,10 @@ jobs:
         id: ws-name
         working-directory: ${{ matrix.folder }}
         run: |
-          # Try to extract name from 'cloud { workspaces { name = "..." } }' or 'backend' blocks
-          # Note: This regex is best-effort.
+          # Best-effort regex to find name in cloud { workspaces { name = "..." } }
           WS_NAME=$(grep -h "name[[:space:]]*=" *.tf 2>/dev/null | grep -v "#" | head -n 1 | awk -F'"' '{print $2}')
 
           if [ -z "$WS_NAME" ]; then
-             # Fallback to the directory name if not found in code
              WS_NAME=$(basename "${{ matrix.folder }}")
              echo "::notice::Workspace name not found in TF files. Using folder name: $WS_NAME"
           fi
@@ -94,41 +92,28 @@ jobs:
           WS: ${{ steps.ws-name.outputs.workspace }}
           FOLDER_PATH: ${{ matrix.folder }}
         run: |
-          set -e # Fail script immediately on error
-
+          set -e # Fail immediately on error
           API_URL="https://app.terraform.io/api/v2/organizations/$ORG/workspaces"
           CONTENT_TYPE="Content-Type: application/vnd.api+json"
           AUTH_HEADER="Authorization: Bearer $TF_TOKEN"
 
           echo "Checking workspace '$WS'..."
-
-          # 1. Check if workspace exists (suppress output, capture HTTP code)
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "$AUTH_HEADER" "$API_URL/$WS")
 
-          # 2. Create if missing
+          # 1. Create if missing
           if [ "$HTTP_STATUS" -eq 404 ]; then
             echo "Workspace '$WS' not found. Creating..."
-            
-            # Construct JSON payload
-            CREATE_PAYLOAD=$(jq -n \
-              --arg name "$WS" \
-              '{data:{type:"workspaces", attributes:{name:$name, "execution-mode":"remote"}}}')
-
+            CREATE_PAYLOAD=$(jq -n --arg name "$WS" '{data:{type:"workspaces", attributes:{name:$name, "execution-mode":"remote"}}}')
             curl -s -f -X POST -H "$AUTH_HEADER" -H "$CONTENT_TYPE" -d "$CREATE_PAYLOAD" "$API_URL"
-            echo "Workspace created successfully."
           elif [ "$HTTP_STATUS" -ne 200 ]; then
             echo "::error::Failed to check workspace. HTTP Status: $HTTP_STATUS"
             exit 1
           fi
 
-          # 3. Enforce Configuration (Working Directory + Auto-Apply)
-          # "structured-run-output-enabled": false ensures logs stream nicely to GitHub Actions
-          echo "Enforcing configuration for WD: $FOLDER_PATH"
-          
-          UPDATE_PAYLOAD=$(jq -n \
-            --arg wd "$FOLDER_PATH" \
-            '{data:{type:"workspaces", attributes:{"auto-apply":true, "structured-run-output-enabled":false, "working-directory":$wd}}}')
-
+          # 2. Enforce Configuration
+          echo "Enforcing settings for WD: $FOLDER_PATH"
+          # auto-apply: true ensures the run executes immediately without manual approval in UI
+          UPDATE_PAYLOAD=$(jq -n --arg wd "$FOLDER_PATH" '{data:{type:"workspaces", attributes:{"auto-apply":true, "structured-run-output-enabled":false, "working-directory":$wd}}}')
           curl -s -f -X PATCH -H "$AUTH_HEADER" -H "$CONTENT_TYPE" -d "$UPDATE_PAYLOAD" "$API_URL/$WS"
 
       # --- STEP: Upload & Apply ---
@@ -137,10 +122,8 @@ jobs:
         id: apply-upload
         with:
           workspace: ${{ steps.ws-name.outputs.workspace }}
-          # IMPORTANT: We upload root "./" because we set "working-directory" in the previous step.
-          # This allows Terraform to see shared modules if you have them in root.
           directory: "./" 
-          speculative: false
+          speculative: false # This triggers a real Apply
 
       - name: Create Apply Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
@@ -148,4 +131,6 @@ jobs:
         with:
           workspace: ${{ steps.ws-name.outputs.workspace }}
           configuration_version: ${{ steps.apply-upload.outputs.configuration_version_id }}
+          organization: ${{ env.TF_CLOUD_ORGANIZATION }}
+          token: ${{ secrets.TF_API_TOKEN }}
           message: "Applied via GitHub Actions: ${{ matrix.folder }}"
