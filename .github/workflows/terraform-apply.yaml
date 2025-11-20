@@ -58,65 +58,83 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Get Workspace Name
+      # --- UPDATED STEP: Extract Name from Code (backend.tf) ---
+      - name: Get Workspace Name from Config
         id: ws-name
         run: |
-          FOLDER="${{ matrix.folder }}"
-          CLEAN_NAME=$(basename "$FOLDER")
-          echo "workspace=$CLEAN_NAME" >> "$GITHUB_OUTPUT"
+          cd "${{ matrix.folder }}"
+          
+          # 1. Find the .tf file containing the 'workspaces {' block
+          CONFIG_FILE=$(grep -l "workspaces[[:space:]]*{" *.tf | head -n 1)
+          
+          if [ -n "$CONFIG_FILE" ]; then
+             echo "Found backend configuration in: $CONFIG_FILE"
+             
+             # 2. Extract the value inside name = "VALUE"
+             WS_NAME=$(grep -E 'name[[:space:]]*=[[:space:]]*"[^"]+"' "$CONFIG_FILE" | head -n 1 | sed -E 's/.*name[[:space:]]*=[[:space:]]*"([^"]+)".*/\1/')
+          fi
 
-      # --- FIX START: Auto-create workspace if missing ---
-      - name: Ensure Workspace Exists
+          # 3. Fallback: If not found in code, use folder name
+          if [ -z "$WS_NAME" ]; then
+             echo "WARNING: Could not extract workspace name from .tf files. Defaulting to folder name."
+             WS_NAME=$(basename "${{ matrix.folder }}")
+          fi
+          
+          echo "Detected Workspace: $WS_NAME"
+          echo "workspace=$WS_NAME" >> "$GITHUB_OUTPUT"
+
+      # --- ENHANCED STEP: Ensure Workspace & Enforce Config ---
+      - name: Ensure Workspace & Configuration
         env:
           TF_TOKEN: ${{ secrets.TF_API_TOKEN }}
           ORG: ${{ env.TF_CLOUD_ORGANIZATION }}
           WS: ${{ steps.ws-name.outputs.workspace }}
+          FOLDER_PATH: ${{ matrix.folder }}
         run: |
-          echo "Checking if workspace '$WS' exists in org '$ORG'..."
-          
-          # 1. Check existence (returns 200 if found, 404 if not)
+          echo "Checking configuration for workspace '$WS'..."
+
+          # 1. Check if workspace exists
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer $TF_TOKEN" \
             -H "Content-Type: application/vnd.api+json" \
             "https://app.terraform.io/api/v2/organizations/$ORG/workspaces/$WS")
 
+          # 2. Create if missing
           if [ "$HTTP_STATUS" -eq 404 ]; then
             echo "Workspace not found. Creating '$WS'..."
-            
-            # 2. Create Payload
-            cat > payload.json <<EOF
-            {
-              "data": {
-                "attributes": {
-                  "name": "$WS",
-                  "execution-mode": "remote" 
-                },
-                "type": "workspaces"
-              }
-            }
-            EOF
-
-            # 3. Create Workspace via API
             curl -s -f -X POST \
               -H "Authorization: Bearer $TF_TOKEN" \
               -H "Content-Type: application/vnd.api+json" \
-              -d @payload.json \
+              -d "{\"data\":{\"attributes\":{\"name\":\"$WS\",\"execution-mode\":\"remote\"},\"type\":\"workspaces\"}}" \
               "https://app.terraform.io/api/v2/organizations/$ORG/workspaces"
-              
-            echo "Workspace '$WS' created successfully."
-          else
-            echo "Workspace '$WS' already exists."
+            echo "Workspace created."
           fi
-      # --- FIX END ---
 
+          # 3. Enforce Configuration
+          echo "Enforcing settings: Auto-Apply=True, Console UI=True, WD=$FOLDER_PATH"
+          
+          PAYLOAD=$(jq -n \
+            --arg wd "$FOLDER_PATH" \
+            '{data: {type: "workspaces", attributes: {"auto-apply": true, "structured-run-output-enabled": false, "working-directory": $wd}}}')
+
+          curl -s -f -X PATCH \
+            -H "Authorization: Bearer $TF_TOKEN" \
+            -H "Content-Type: application/vnd.api+json" \
+            -d "$PAYLOAD" \
+            "https://app.terraform.io/api/v2/organizations/$ORG/workspaces/$WS"
+
+          echo "Configuration successfully enforced."
+
+      # --- FIX: Upload Root (./) instead of specific folder ---
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2
         id: apply-upload
         with:
           workspace: ${{ steps.ws-name.outputs.workspace }}
-          directory: ${{ matrix.folder }}
+          # Upload the entire repo so TFC can 'cd' into the working directory
+          directory: "./" 
+          speculative: false
 
-      # This Action handles Auto-Apply logic automatically
       - name: Create Apply Run
         uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
         id: create-run
