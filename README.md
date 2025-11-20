@@ -4,7 +4,7 @@
 <div align="center">
 
 
-# IAC AUTOMATION WITH GITHUB ACTIONS AND TERRAFORM
+# Terraform Github Actions Pipeline
 
 <em></em>
 
@@ -41,8 +41,6 @@
 ## Overview
 
 This project demonstrates Infrastructure as Code (IaC) automation using Terraform and GitHub Actions. It provides automated workflows for managing cloud infrastructure with two separate environments: Student-Management and Template. The repository implements CI/CD best practices for infrastructure deployment, including automated planning and applying of Terraform configurations through GitHub Actions workflows.
-
-The project showcases enterprise-grade infrastructure management with automated validation, planning, and deployment processes, making it ideal for learning DevOps practices or as a template for production infrastructure automation.
 
 ---
 
@@ -171,79 +169,70 @@ This project requires the following dependencies:
 - **GitHub Account:** For GitHub Actions workflows
 - **Cloud CLI:** AWS CLI, Azure CLI, or gcloud CLI (depending on your provider)
 
-### Installation
+## Installation & Setup
 
-Build IaC-Automation-with-Github-Actions-and-Terraform.git from the source and install dependencies:
+This project utilizes **HCP Terraform** (formerly Terraform Cloud) for remote state management and execution, driven by GitHub Actions via the API-driven workflow.
 
-1. **Clone the repository:**
+### 1. Prerequisites
 
+* **HCP Terraform Account:** [Sign up here](https://app.terraform.io/signup/account).
+* **AWS Account:** Ensure you have an IAM user with `AdministratorAccess` or sufficient permissions.
+
+### 2. Configure HCP Terraform (Backend)
+
+1.  **Create an Organization:** Log in to HCP Terraform and create a new organization.
+2.  **Create a Workspace:**
+    * Select **"API-driven workflow"**.
+    * Name it (e.g., `learn-terraform-github-actions`).
+3.  **Add Environment Variables:**
+    * Navigate to your Workspace > **Variables**.
+    * Add the following as **Environment Variables** (mark as *Sensitive*):
+        * `AWS_ACCESS_KEY_ID`
+        * `AWS_SECRET_ACCESS_KEY`
+    * *(Note: These are stored in HCP Terraform so the remote runner can authenticate with AWS.)*
+
+### 3. Configure GitHub Repository
+
+To allow GitHub Actions to trigger runs in HCP Terraform:
+
+1.  **Generate a Team Token:**
+    * In HCP Terraform, go to **Organization Settings** > **Teams**.
+    * Create a team (e.g., "GitHub Actions") or use an existing one.
+    * Go to **Organization Settings** > **API Tokens** > **Create a team token**.
+    * **Copy this token.**
+2.  **Add Secret to GitHub:**
+    * In this GitHub repository, go to **Settings** > **Secrets and variables** > **Actions**.
+    * Click **New repository secret**.
+    * **Name:** `TF_API_TOKEN`
+    * **Value:** *(Paste the Team Token you generated)*.
+
+### 4. Workflow Usage
+
+The repository includes workflows in `.github/workflows/` that interact with the remote backend:
+
+* **Plan (`terraform-plan.yml`)**: Triggers on **Pull Requests**. It uploads the configuration, runs a speculative plan, and comments the results on the PR.
+* **Apply (`terraform-apply.yml`)**: Triggers on **Push to Main**. It automatically applies the configuration to provision infrastructure.
+
+### 5. Local Development (Optional)
+
+If you wish to run Terraform locally before pushing:
+
+1.  **Clone the repository:**
     ```sh
-    ❯ git clone https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform.git
+    git clone [https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform)
+    cd IaC-Automation-with-Github-Actions-and-Terraform
     ```
 
-2. **Navigate to the project directory:**
-
+2.  **Authenticate with HCP Terraform:**
     ```sh
-    ❯ cd IaC-Automation-with-Github-Actions-and-Terraform.git
+    terraform login
     ```
 
-3. **Install Terraform:**
-
+3.  **Initialize & Plan:**
     ```sh
-    # macOS (using Homebrew)
-    ❯ brew tap hashicorp/tap
-    ❯ brew install hashicorp/tap/terraform
-    
-    # Linux (using package manager)
-    ❯ wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-    ❯ echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-    ❯ sudo apt update && sudo apt install terraform
-    
-    # Verify installation
-    ❯ terraform version
+    terraform init
+    terraform plan
     ```
-
-4. **Configure cloud provider credentials:**
-
-    ```sh
-    # Example for AWS
-    ❯ aws configure
-    
-    # Or set environment variables
-    ❯ export AWS_ACCESS_KEY_ID="your-access-key"
-    ❯ export AWS_SECRET_ACCESS_KEY="your-secret-key"
-    ❯ export AWS_DEFAULT_REGION="us-east-1"
-    ```
-
-5. **Initialize Terraform:**
-
-    ```sh
-    # Navigate to desired environment
-    ❯ cd Student-Management
-    
-    # Initialize Terraform
-    ❯ terraform init
-    ```
-
-### Usage
-
-Run the project with:
-
-**Local Development:**
-
-```sh
-# Navigate to the environment directory
-❯ cd Student-Management
-
-# Format Terraform files
-❯ terraform fmt
-
-# Validate configuration
-❯ terraform validate
-
-# Plan infrastructure changes
-❯ terraform plan
-```
 
 **GitHub Actions Workflow:**
 
