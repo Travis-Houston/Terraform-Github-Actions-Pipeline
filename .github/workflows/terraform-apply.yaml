@@ -74,7 +74,7 @@ jobs:
 
       # This Action handles Auto-Apply logic automatically
       - name: Create Apply Run
-        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.4
+        uses: hashicorp/tfc-workflows-github/actions/create-run@v1.3.2
         id: create-run
         with:
           workspace: ${{ steps.ws-name.outputs.workspace }}
