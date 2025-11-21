@@ -42,18 +42,20 @@
 
 <img width="1484" height="491" alt="Terraform drawio" src="https://github.com/user-attachments/assets/fe69b478-2173-447f-9d54-008d0129ef11" />
 
-This project demonstrates Infrastructure as Code (IaC) automation using Terraform and GitHub Actions. It provides automated workflows for managing cloud infrastructure with two separate environments: Student-Management and Template. The repository implements CI/CD best practices for infrastructure deployment, including automated planning and applying of Terraform configurations through GitHub Actions workflows.
+This project demonstrates Infrastructure as Code (IaC) automation using Terraform and GitHub Actions. It provides automated workflows for managing cloud infrastructure using AWS. The repository implements CI/CD best practices for infrastructure deployment, including automated planning and applying of Terraform configurations through GitHub Actions workflows integrated with HCP Terraform (formerly Terraform Cloud) for remote state management.
 
 ---
 
 ## Features
 
 - **Automated Infrastructure Deployment**: GitHub Actions workflows automatically validate and deploy infrastructure changes
-- **Dual Environment Management**: Separate configurations for different infrastructures
+- **HCP Terraform Integration**: API-driven workflow with remote state management and execution
 - **Remote State Management**: Terraform Cloud configuration for collaborative state management
 - **Modular Terraform Code**: Well-organized Terraform modules with separated concerns (network, main, variables, outputs)
 - **Pull Request Integration**: Automated Terraform plan on pull requests for review before merging
-- **Secure Deployment**: GitHub Actions workflows with proper authentication and authorization
+- **Security Scanning**: Automated security checks using Checkov with results uploaded to GitHub Advanced Security
+- **Code Quality Checks**: Automated validation and formatting checks for Terraform code
+- **Secure Deployment**: GitHub Actions workflows with proper authentication and secure credential management
 
 ---
 
@@ -63,8 +65,9 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
  Terraform-Github-Actions-Pipeline/
     ├── .github
     │   └── workflows
-    │       ├── terraform-apply.yaml    # Automated deployment workflow
-    │       └── terraform-plan.yaml     # Automated planning workflow
+    │       ├── terraform-apply.yaml       # Automated deployment workflow
+    │       ├── terraform-plan.yaml        # Automated planning workflow
+    │       └── terraform-unit-test.yaml   # Automated testing and security scanning workflow
     └── Template            
         ├── .terraformignore
         ├── backend.tf
@@ -150,6 +153,10 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
                             <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-plan.yaml'>terraform-plan.yaml</a></b></td>
                             <td style='padding: 8px;'><code>❯ Pull request workflow that validates and generates Terraform execution plans for infrastructure changes</code></td>
                         </tr>
+                        <tr style='border-bottom: 1px solid #eee;'>
+                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-unit-test.yaml'>terraform-unit-test.yaml</a></b></td>
+                            <td style='padding: 8px;'><code>❯ Pull request workflow that runs unit tests, validates, formats, and performs security scanning with Checkov</code></td>
+                        </tr>
                     </table>
                 </blockquote>
             </details>
@@ -166,10 +173,10 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
 This project requires the following dependencies:
 
 - **Terraform:** Version 1.0 or higher ([Download](https://www.terraform.io/downloads))
-- **Cloud Provider Account:** AWS, Azure, or GCP (depending on provider configuration)
+- **HCP Terraform Account:** [Sign up here](https://app.terraform.io/signup/account)
+- **AWS Account:** With IAM user that has `AdministratorAccess` or sufficient permissions
 - **Git:** For version control
 - **GitHub Account:** For GitHub Actions workflows
-- **Cloud CLI:** AWS CLI, Azure CLI, or gcloud CLI (depending on your provider)
 
 ## Installation & Setup
 
@@ -185,7 +192,7 @@ This project utilizes **HCP Terraform** (formerly Terraform Cloud) for remote st
 1.  **Create an Organization:** Log in to HCP Terraform and create a new organization.
 2.  **Create a Workspace:**
     * Select **"API-driven workflow"**.
-    * Name it (e.g., `learn-terraform-github-actions`).
+    * Name it (e.g., `terraform-github-actions-pipeline`).
 3.  **Add Environment Variables:**
     * Navigate to your Workspace > **Variables**.
     * Add the following as **Environment Variables** (mark as *Sensitive*):
@@ -207,13 +214,19 @@ To allow GitHub Actions to trigger runs in HCP Terraform:
     * Click **New repository secret**.
     * **Name:** `TF_API_TOKEN`
     * **Value:** *(Paste the Team Token you generated)*.
+3.  **Enable GitHub Advanced Security (for security scanning):**
+    * In this GitHub repository, go to **Settings** > **Code security and analysis**.
+    * Under **Code scanning**, click **Set up** > **Default** or **Advanced**.
+    * This enables CodeQL and allows the unit test workflow to upload security scan results.
+    * *(Note: This feature requires GitHub Advanced Security for private repositories, but is free for public repositories)*.
 
 ### 4. Workflow Usage
 
 The repository includes workflows in `.github/workflows/` that interact with the remote backend:
 
-* **Plan (`terraform-plan.yml`)**: Triggers on **Pull Requests**. It uploads the configuration, runs a speculative plan, and comments the results on the PR.
-* **Apply (`terraform-apply.yml`)**: Triggers on **Push to Main**. It automatically applies the configuration to provision infrastructure.
+* **Unit Tests (`terraform-unit-test.yaml`)**: Triggers on **Pull Requests**. Runs validation, format checks, and security scanning with Checkov. Results are uploaded to GitHub Advanced Security.
+* **Plan (`terraform-plan.yaml`)**: Triggers on **Pull Requests**. It uploads the configuration, runs a speculative plan, and comments the results on the PR.
+* **Apply (`terraform-apply.yaml`)**: Triggers on **Push to Main**. It automatically applies the configuration to provision infrastructure.
 
 ### 5. Local Development (Optional)
 
@@ -222,6 +235,7 @@ If you wish to run Terraform locally before pushing:
 1.  **Clone the repository:**
     ```sh
     git clone https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline.git
+    cd Terraform-Github-Actions-Pipeline
     ```
 
 2.  **Authenticate with HCP Terraform:**
@@ -229,17 +243,20 @@ If you wish to run Terraform locally before pushing:
     terraform login
     ```
 
-3.  **Initialize & Plan:**
+3.  **Navigate to Template directory and initialize:**
     ```sh
+    cd Template
     terraform init
     terraform plan
     ```
 
-**GitHub Actions Workflow:**
+### 6. Using the Pipeline
 
 1. **Create a Pull Request**: Push your changes to a feature branch and create a PR
-   - The `terraform-plan.yaml` workflow will automatically run
-   - Review the Terraform plan in the PR comments
+   - The `terraform-unit-test.yaml` workflow will automatically run validation, formatting checks, and security scans
+   - The `terraform-plan.yaml` workflow will automatically run and generate an execution plan
+   - Review the Terraform plan and security scan results in the PR comments
+   - Address any security findings or format issues before merging
 
 2. **Merge to Main**: Once approved and merged
    - The `terraform-apply.yaml` workflow will automatically deploy changes
@@ -251,11 +268,11 @@ If you wish to run Terraform locally before pushing:
 
 - [X] **`Task 1`**: <strike>Implement automated Terraform plan workflow for pull requests</strike>
 - [X] **`Task 2`**: <strike>Implement automated Terraform apply workflow for main branch</strike>
-- [ ] **`Task 3`**: Add Terraform state locking with DynamoDB
-- [ ] **`Task 4`**: Implement multi-environment deployment with workspaces
-- [ ] **`Task 5`**: Add infrastructure testing with Terratest
-- [ ] **`Task 6`**: Implement cost estimation in PR comments
-- [ ] **`Task 7`**: Add security scanning with tfsec or Checkov
+- [X] **`Task 3`**: <strike>Add security scanning with Checkov</strike>
+- [ ] **`Task 4`**: Add Terraform state locking with DynamoDB
+- [ ] **`Task 5`**: Implement multi-environment deployment with workspaces
+- [ ] **`Task 6`**: Add infrastructure testing with Terratest
+- [ ] **`Task 7`**: Implement cost estimation in PR comments
 
 ---
 
