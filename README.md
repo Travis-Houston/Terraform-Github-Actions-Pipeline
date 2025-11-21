@@ -169,7 +169,7 @@ This project requires the following dependencies:
 
 - **Terraform:** Version 1.0 or higher ([Download](https://www.terraform.io/downloads))
 - **HCP Terraform Account:** [Sign up here](https://app.terraform.io/signup/account)
-- **AWS Account:** With IAM user that has `AdministratorAccess` or sufficient permissions
+- **AWS Account:** With IAM user with sufficient permissions
 - **Git:** For version control
 - **GitHub Account:** For GitHub Actions workflows
 
