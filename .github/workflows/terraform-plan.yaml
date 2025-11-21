@@ -3,7 +3,7 @@ name: "Terraform Plan"
 on:
   pull_request:
 
-# 1. Concurrency: Cancel old runs when a new commit is pushed to the PR
+# Cancel old runs when a new commit is pushed to the PR
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -45,15 +45,65 @@ jobs:
         run: |
           echo "matrix=${{ steps.changed-files.outputs.all_changed_files || '[]' }}" >> "$GITHUB_OUTPUT"
 
-  # JOB 2: Run Plan (Parallel Matrix)
-  terraform-plan:
+  # JOB 2: Run Unit Tests (Validation, Format, Security Scan)
+  terraform-unit-tests:
     needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.matrix != '[]' }}
+    name: 'Unit Tests - ${{ matrix.folder }}'
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform Init
+      working-directory: ${{ matrix.folder }}
+      run: terraform init -backend=false
+
+    - name: Terraform Validate
+      working-directory: ${{ matrix.folder }}
+      run: terraform validate
+
+    - name: Terraform Format
+      working-directory: ${{ matrix.folder }}
+      run: terraform fmt -check -recursive
+    
+    - name: Run Checkov action
+      id: checkov
+      uses: bridgecrewio/checkov-action@master
+      with: 
+        directory: ${{ matrix.folder }}
+        framework: terraform
+        output_format: sarif
+        output_file_path: results.sarif
+
+    - name: Upload SARIF file
+      if: success() || failure()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: results.sarif
+        category: checkov-${{ matrix.folder }}
+
+  # JOB 3: Run Plan after unit tests pass
+  terraform-plan:
+    needs: [detect-changes, terraform-unit-tests]
     if: ${{ needs.detect-changes.outputs.matrix != '[]' }}
     name: "Plan - ${{ matrix.folder }}"
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write # Required to comment on the PR
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:

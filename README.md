@@ -66,8 +66,7 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
     ├── .github
     │   └── workflows
     │       ├── terraform-apply.yaml       # Automated deployment workflow
-    │       ├── terraform-plan.yaml        # Automated planning workflow
-    │       └── terraform-unit-test.yaml   # Automated testing and security scanning workflow
+    │       └── terraform-plan.yaml        # Automated planning, testing, and validation workflow
     └── Template            
         ├── .terraformignore
         ├── backend.tf
@@ -151,11 +150,7 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
                         </tr>
                         <tr style='border-bottom: 1px solid #eee;'>
                             <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-plan.yaml'>terraform-plan.yaml</a></b></td>
-                            <td style='padding: 8px;'><code>❯ Pull request workflow that validates and generates Terraform execution plans for infrastructure changes</code></td>
-                        </tr>
-                        <tr style='border-bottom: 1px solid #eee;'>
-                            <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-unit-test.yaml'>terraform-unit-test.yaml</a></b></td>
-                            <td style='padding: 8px;'><code>❯ Pull request workflow that runs unit tests, validates, formats, and performs security scanning with Checkov</code></td>
+                            <td style='padding: 8px;'><code>❯ Pull request workflow that runs unit tests, validates, formats, performs security scanning, and generates Terraform execution plans</code></td>
                         </tr>
                     </table>
                 </blockquote>
@@ -222,10 +217,9 @@ To allow GitHub Actions to trigger runs in HCP Terraform:
 
 ### 4. Workflow Usage
 
-The repository includes workflows in `.github/workflows/` that interact with the remote backend:
+The repository includes workflows in `.github/workflows/`:
 
-* **Unit Tests (`terraform-unit-test.yaml`)**: Triggers on **Pull Requests**. Runs validation, format checks, and security scanning with Checkov. Results are uploaded to GitHub Advanced Security.
-* **Plan (`terraform-plan.yaml`)**: Triggers on **Pull Requests**. It uploads the configuration, runs a speculative plan, and comments the results on the PR.
+* **Plan (`terraform-plan.yaml`)**: Triggers on **Pull Requests**. Runs unit tests (validation, format checks, security scanning with Checkov), uploads the configuration, runs a speculative plan, and comments the results on the PR.
 * **Apply (`terraform-apply.yaml`)**: Triggers on **Push to Main**. It automatically applies the configuration to provision infrastructure.
 
 ### 5. Local Development (Optional)
@@ -253,10 +247,11 @@ If you wish to run Terraform locally before pushing:
 ### 6. Using the Pipeline
 
 1. **Create a Pull Request**: Push your changes to a feature branch and create a PR
-   - The `terraform-unit-test.yaml` workflow will automatically run validation, formatting checks, and security scans
-   - The `terraform-plan.yaml` workflow will automatically run and generate an execution plan
-   - Review the Terraform plan and security scan results in the PR comments
+   - The `terraform-plan.yaml` workflow will automatically run unit tests (validation, formatting checks, and security scans)
+   - After unit tests pass, it will generate a Terraform execution plan
+   - Review the Terraform plan and security scan results in the workflow logs
    - Address any security findings or format issues before merging
+   - **Note:** Ensure all Terraform files are properly formatted by running `terraform fmt -recursive` in your working directory before committing
 
 2. **Merge to Main**: Once approved and merged
    - The `terraform-apply.yaml` workflow will automatically deploy changes
