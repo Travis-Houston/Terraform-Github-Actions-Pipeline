@@ -40,6 +40,8 @@
 
 ## Overview
 
+<img width="1484" height="491" alt="Terraform drawio" src="https://github.com/user-attachments/assets/fe69b478-2173-447f-9d54-008d0129ef11" />
+
 This project demonstrates Infrastructure as Code (IaC) automation using Terraform and GitHub Actions. It provides automated workflows for managing cloud infrastructure with two separate environments: Student-Management and Template. The repository implements CI/CD best practices for infrastructure deployment, including automated planning and applying of Terraform configurations through GitHub Actions workflows.
 
 ---
