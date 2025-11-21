@@ -219,8 +219,7 @@ If you wish to run Terraform locally before pushing:
 
 1.  **Clone the repository:**
     ```sh
-    git clone [https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform](https://github.com/Travis-Houston/IaC-Automation-with-Github-Actions-and-Terraform)
-    cd IaC-Automation-with-Github-Actions-and-Terraform
+    git clone https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline.git
     ```
 
 2.  **Authenticate with HCP Terraform:**
