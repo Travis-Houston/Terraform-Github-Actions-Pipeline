@@ -245,19 +245,6 @@ If you wish to run Terraform locally before pushing:
    - The `terraform-apply.yaml` workflow will automatically deploy changes
    - Monitor the Actions tab for deployment progress
 
-**GitHub Secrets Configuration:**
-
-Configure the following secrets in your repository settings:
-
-```
-Settings → Secrets and variables → Actions → New repository secret
-```
-
-Required secrets:
-- `AWS_ACCESS_KEY_ID` or equivalent for your cloud provider
-- `AWS_SECRET_ACCESS_KEY` or equivalent for your cloud provider
-- `TF_BACKEND_CONFIG` (if using remote state)
-
 ---
 
 ## Roadmap
