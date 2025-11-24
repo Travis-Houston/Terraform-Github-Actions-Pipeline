@@ -129,37 +129,6 @@ jobs:
           echo "Detected Workspace: $WS_NAME"
           echo "workspace=$WS_NAME" >> "$GITHUB_OUTPUT"
 
-      # --- STEP: Ensure Workspace Exists & Configured ---
-      - name: Ensure TFC Workspace
-        env:
-          TF_TOKEN: ${{ secrets.TF_API_TOKEN }}
-          ORG: ${{ env.TF_CLOUD_ORGANIZATION }}
-          WS: ${{ steps.ws-name.outputs.workspace }}
-          FOLDER_PATH: ${{ matrix.folder }}
-        run: |
-          set -e # Fail immediately on error
-          API_URL="https://app.terraform.io/api/v2/organizations/$ORG/workspaces"
-          CONTENT_TYPE="Content-Type: application/vnd.api+json"
-          AUTH_HEADER="Authorization: Bearer $TF_TOKEN"
-
-          echo "Checking workspace '$WS'..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "$AUTH_HEADER" "$API_URL/$WS")
-
-          # 1. Create if missing
-          if [ "$HTTP_STATUS" -eq 404 ]; then
-            echo "Workspace '$WS' not found. Creating..."
-            CREATE_PAYLOAD=$(jq -n --arg name "$WS" '{data:{type:"workspaces", attributes:{name:$name, "execution-mode":"remote"}}}')
-            curl -s -f -X POST -H "$AUTH_HEADER" -H "$CONTENT_TYPE" -d "$CREATE_PAYLOAD" "$API_URL"
-          elif [ "$HTTP_STATUS" -ne 200 ]; then
-             echo "::error::Failed to check workspace. HTTP Status: $HTTP_STATUS"
-             exit 1
-          fi
-
-          # 2. Enforce Configuration
-          echo "Enforcing settings for WD: $FOLDER_PATH"
-          UPDATE_PAYLOAD=$(jq -n --arg wd "$FOLDER_PATH" '{data:{type:"workspaces", attributes:{"auto-apply":true, "structured-run-output-enabled":false, "working-directory":$wd}}}')
-          curl -s -f -X PATCH -H "$AUTH_HEADER" -H "$CONTENT_TYPE" -d "$UPDATE_PAYLOAD" "$API_URL/$WS"
-
       # --- STEP: Upload & Plan ---
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.3.2

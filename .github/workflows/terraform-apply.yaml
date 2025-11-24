@@ -15,11 +15,14 @@ env:
   TF_CLOUD_ORGANIZATION: "Terraform-Labs-2025"
 
 jobs:
-  # JOB 1: Detect Changed Folders
+  # JOB 1: Detect Changed and Deleted Folders
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      apply_matrix: ${{ steps.set-matrix.outputs.apply_matrix }}
+      destroy_matrix: ${{ steps.set-matrix.outputs.destroy_matrix }}
+      has_applies: ${{ steps.set-matrix.outputs.has_applies }}
+      has_destroys: ${{ steps.set-matrix.outputs.has_destroys }}
     permissions:
       contents: read
     steps:
@@ -28,7 +31,7 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Get changed directories
+      - name: Get changed and deleted files
         id: changed-files
         uses: tj-actions/changed-files@v44
         with:
@@ -42,15 +45,50 @@ jobs:
              .github/**
              **/.terraform/**
 
-      - name: Set Matrix
+      - name: Set Matrices for Apply and Destroy
         id: set-matrix
         run: |
-          echo "matrix=${{ steps.changed-files.outputs.all_changed_files || '[]' }}" >> "$GITHUB_OUTPUT"
+          set -e
+          
+          # Get added/modified directories for Apply
+          CHANGED_FILES='${{ steps.changed-files.outputs.all_changed_files }}'
+          echo "Changed/Added files: $CHANGED_FILES"
+          
+          # Get deleted directories for Destroy
+          DELETED_FILES='${{ steps.changed-files.outputs.deleted_files }}'
+          echo "Deleted files: $DELETED_FILES"
+          
+          # Extract unique directories from deleted files
+          DELETED_DIRS=$(echo "$DELETED_FILES" | jq -r '.[]' | xargs -r dirname | sort -u | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Deleted directories: $DELETED_DIRS"
+          
+          # Count items
+          APPLY_COUNT=$(echo "$CHANGED_FILES" | jq 'length')
+          DESTROY_COUNT=$(echo "$DELETED_DIRS" | jq 'length')
+          
+          # Set outputs
+          if [ "$APPLY_COUNT" -gt 0 ]; then
+            echo "has_applies=true" >> "$GITHUB_OUTPUT"
+            echo "apply_matrix=$CHANGED_FILES" >> "$GITHUB_OUTPUT"
+            echo "::notice::Found $APPLY_COUNT workspace(s) to apply"
+          else
+            echo "has_applies=false" >> "$GITHUB_OUTPUT"
+            echo "apply_matrix=[]" >> "$GITHUB_OUTPUT"
+          fi
+          
+          if [ "$DESTROY_COUNT" -gt 0 ]; then
+            echo "has_destroys=true" >> "$GITHUB_OUTPUT"
+            echo "destroy_matrix=$DELETED_DIRS" >> "$GITHUB_OUTPUT"
+            echo "::notice::Found $DESTROY_COUNT workspace(s) to destroy"
+          else
+            echo "has_destroys=false" >> "$GITHUB_OUTPUT"
+            echo "destroy_matrix=[]" >> "$GITHUB_OUTPUT"
+          fi
 
   # JOB 2: Apply (Parallel Matrix)
   terraform-apply:
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.matrix != '[]' }}
+    if: ${{ needs.detect-changes.outputs.has_applies == 'true' }}
     name: "Apply - ${{ matrix.folder }}"
     runs-on: ubuntu-latest
     permissions:
@@ -58,7 +96,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        folder: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+        folder: ${{ fromJson(needs.detect-changes.outputs.apply_matrix) }}
     
     # Security: Only expose the token to this specific job
     env:
@@ -83,38 +121,6 @@ jobs:
           
           echo "Detected Workspace: $WS_NAME"
           echo "workspace=$WS_NAME" >> "$GITHUB_OUTPUT"
-
-      # --- STEP: Ensure Workspace Exists & Configured ---
-      - name: Ensure TFC Workspace
-        env:
-          TF_TOKEN: ${{ secrets.TF_API_TOKEN }}
-          ORG: ${{ env.TF_CLOUD_ORGANIZATION }}
-          WS: ${{ steps.ws-name.outputs.workspace }}
-          FOLDER_PATH: ${{ matrix.folder }}
-        run: |
-          set -e # Fail immediately on error
-          API_URL="https://app.terraform.io/api/v2/organizations/$ORG/workspaces"
-          CONTENT_TYPE="Content-Type: application/vnd.api+json"
-          AUTH_HEADER="Authorization: Bearer $TF_TOKEN"
-
-          echo "Checking workspace '$WS'..."
-          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -H "$AUTH_HEADER" "$API_URL/$WS")
-
-          # 1. Create if missing
-          if [ "$HTTP_STATUS" -eq 404 ]; then
-            echo "Workspace '$WS' not found. Creating..."
-            CREATE_PAYLOAD=$(jq -n --arg name "$WS" '{data:{type:"workspaces", attributes:{name:$name, "execution-mode":"remote"}}}')
-            curl -s -f -X POST -H "$AUTH_HEADER" -H "$CONTENT_TYPE" -d "$CREATE_PAYLOAD" "$API_URL"
-          elif [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "::error::Failed to check workspace. HTTP Status: $HTTP_STATUS"
-            exit 1
-          fi
-
-          # 2. Enforce Configuration
-          echo "Enforcing settings for WD: $FOLDER_PATH"
-          # auto-apply: true ensures the run executes immediately without manual approval in UI
-          UPDATE_PAYLOAD=$(jq -n --arg wd "$FOLDER_PATH" '{data:{type:"workspaces", attributes:{"auto-apply":true, "structured-run-output-enabled":false, "working-directory":$wd}}}')
-          curl -s -f -X PATCH -H "$AUTH_HEADER" -H "$CONTENT_TYPE" -d "$UPDATE_PAYLOAD" "$API_URL/$WS"
 
       # --- STEP: Upload & Apply ---
       - name: Upload Configuration
