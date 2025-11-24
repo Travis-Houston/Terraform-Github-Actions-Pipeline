@@ -53,8 +53,12 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
 - **Remote State Management**: Terraform Cloud configuration for collaborative state management
 - **Modular Terraform Code**: Well-organized Terraform modules with separated concerns (network, main, variables, outputs)
 - **Pull Request Integration**: Automated Terraform plan on pull requests for review before merging
+- **Multi-Job Pipeline**: Separated unit tests and planning jobs for better visibility and control
 - **Security Scanning**: Automated security checks using Checkov with results uploaded to GitHub Advanced Security
 - **Code Quality Checks**: Automated validation and formatting checks for Terraform code
+- **Smart Change Detection**: Automatically detects modified Terraform directories and runs workflows only for changed workspaces
+- **Matrix Strategy**: Parallel execution for multiple workspace deployments
+- **Workspace Auto-Discovery**: Automatically resolves workspace names from Terraform configuration files
 - **Secure Deployment**: GitHub Actions workflows with proper authentication and secure credential management
 
 ---
@@ -65,16 +69,16 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
  Terraform-Github-Actions-Pipeline/
     ├── .github
     │   └── workflows
-    │       ├── terraform-apply.yaml       # Automated deployment workflow
-    │       └── terraform-plan.yaml        # Automated planning, testing, and validation workflow
+    │       ├── terraform-apply.yaml       # Automated deployment workflow with change detection
+    │       └── terraform-plan.yaml        # Three-stage workflow: change detection, unit tests, and planning
     └── Template            
-        ├── .terraformignore
-        ├── backend.tf
-        ├── main.tf
-        ├── network.tf
-        ├── output.tf
-        ├── provider.tf
-        └── variables.tf
+        ├── .terraformignore               # Files excluded from Terraform uploads
+        ├── backend.tf                     # HCP Terraform backend configuration
+        ├── main.tf                        # Core infrastructure resources
+        ├── network.tf                     # Network infrastructure (VPC, subnets, routing)
+        ├── output.tf                      # Output values for resource attributes
+        ├── provider.tf                    # Cloud provider configuration
+        └── variables.tf                   # Input variable definitions
 ```
 
 ### Project Index
@@ -146,11 +150,11 @@ This project demonstrates Infrastructure as Code (IaC) automation using Terrafor
                     </thead>
                         <tr style='border-bottom: 1px solid #eee;'>
                             <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-apply.yaml'>terraform-apply.yaml</a></b></td>
-                            <td style='padding: 8px;'><code>❯ Automated deployment workflow that applies Terraform changes to infrastructure on main branch merges</code></td>
+                            <td style='padding: 8px;'><code>❯ Multi-job deployment workflow with smart change detection, parallel matrix execution, and automatic workspace resolution</code></td>
                         </tr>
                         <tr style='border-bottom: 1px solid #eee;'>
                             <td style='padding: 8px;'><b><a href='https://github.com/Travis-Houston/Terraform-Github-Actions-Pipeline/blob/master/.github/workflows/terraform-plan.yaml'>terraform-plan.yaml</a></b></td>
-                            <td style='padding: 8px;'><code>❯ Pull request workflow that runs unit tests, validates, formats, performs security scanning, and generates Terraform execution plans</code></td>
+                            <td style='padding: 8px;'><code>❯ Three-stage PR workflow: change detection, parallel unit tests (validation, formatting, security scanning), and speculative plan generation</code></td>
                         </tr>
                     </table>
                 </blockquote>
@@ -217,10 +221,38 @@ To allow GitHub Actions to trigger runs in HCP Terraform:
 
 ### 4. Workflow Usage
 
-The repository includes workflows in `.github/workflows/`:
+The repository includes two GitHub Actions workflows in `.github/workflows/`:
 
-* **Plan (`terraform-plan.yaml`)**: Triggers on **Pull Requests**. Runs unit tests (validation, format checks, security scanning with Checkov), uploads the configuration, runs a speculative plan, and comments the results on the PR.
-* **Apply (`terraform-apply.yaml`)**: Triggers on **Push to Main**. It automatically applies the configuration to provision infrastructure.
+#### **Terraform Plan Workflow (`terraform-plan.yaml`)**
+Triggers on **Pull Requests** and includes three jobs:
+
+1. **Detect Changes**: Identifies modified Terraform directories using file change detection
+2. **Unit Tests** (runs in parallel for each workspace):
+   - Terraform initialization (backend-less mode)
+   - Terraform validation
+   - Terraform format checking
+   - Security scanning with Checkov (results uploaded to GitHub Advanced Security)
+3. **Plan Execution** (runs after unit tests pass):
+   - Automatically discovers workspace name from Terraform configuration
+   - Uploads configuration to HCP Terraform
+   - Creates a speculative plan (non-destructive)
+   - Displays plan output with resource changes
+
+#### **Terraform Apply Workflow (`terraform-apply.yaml`)**
+Triggers on **Push to Main** branch and includes:
+
+1. **Detect Changes**: Identifies added/modified and deleted directories
+2. **Apply Execution** (runs in parallel for multiple workspaces):
+   - Automatically resolves workspace names
+   - Uploads configuration to HCP Terraform
+   - Creates and executes apply runs
+   - Provisions or updates infrastructure automatically
+
+**Key Benefits:**
+- Only affected workspaces are processed (efficient change detection)
+- Parallel matrix execution for multiple workspaces
+- Automatic workspace name resolution
+- Separation of concerns with dedicated unit test jobs
 
 ### 5. Local Development (Optional)
 
@@ -246,16 +278,60 @@ If you wish to run Terraform locally before pushing:
 
 ### 6. Using the Pipeline
 
-1. **Create a Pull Request**: Push your changes to a feature branch and create a PR
-   - The `terraform-plan.yaml` workflow will automatically run unit tests (validation, formatting checks, and security scans)
-   - After unit tests pass, it will generate a Terraform execution plan
-   - Review the Terraform plan and security scan results in the workflow logs
-   - Address any security findings or format issues before merging
-   - **Note:** Ensure all Terraform files are properly formatted by running `terraform fmt -recursive` in your working directory before committing
+#### **Development Workflow:**
 
-2. **Merge to Main**: Once approved and merged
-   - The `terraform-apply.yaml` workflow will automatically deploy changes
-   - Monitor the Actions tab for deployment progress
+1. **Create a Feature Branch**:
+   ```sh
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make Infrastructure Changes**:
+   - Modify Terraform files in your workspace directory
+   - Ensure proper formatting: `terraform fmt -recursive`
+   - Validate locally (optional): `terraform validate`
+
+3. **Create a Pull Request**:
+   - Push your changes to GitHub
+   - Open a pull request against the `main` branch
+   - The **Terraform Plan** workflow automatically triggers with three stages:
+
+   **Stage 1: Change Detection**
+   - Identifies which Terraform directories have been modified
+   - Creates a matrix of workspaces to test
+
+   **Stage 2: Unit Tests** (parallel execution per workspace)
+   - ✅ Terraform initialization
+   - ✅ Terraform validation
+   - ✅ Format checking (`terraform fmt -check`)
+   - 🔒 Security scanning with Checkov
+   - Results uploaded to GitHub Advanced Security
+
+   **Stage 3: Terraform Plan** (after unit tests pass)
+   - Generates speculative execution plan
+   - Shows resources to be added, changed, or destroyed
+   - Review plan output in workflow logs
+
+4. **Review and Address Feedback**:
+   - Check the Actions tab for workflow results
+   - Review security scan findings in the Security tab
+   - Fix any format issues or security concerns
+   - Push additional commits to update the PR (workflow re-runs automatically)
+
+5. **Merge to Main**:
+   - Once approved and all checks pass, merge the PR
+   - The **Terraform Apply** workflow automatically triggers:
+     - Detects changed workspaces
+     - Uploads configurations to HCP Terraform
+     - Executes apply runs in parallel for affected workspaces
+     - Provisions/updates infrastructure
+   - Monitor deployment progress in the Actions tab
+
+#### **Best Practices:**
+- Always format code before committing: `terraform fmt -recursive`
+- Review security scan results and address critical findings
+- Test changes in a development workspace before production
+- Use meaningful commit messages for clear audit trails
+- Monitor workflow logs for detailed execution information
 
 ---
 
@@ -264,10 +340,15 @@ If you wish to run Terraform locally before pushing:
 - [X] **`Task 1`**: <strike>Implement automated Terraform plan workflow for pull requests</strike>
 - [X] **`Task 2`**: <strike>Implement automated Terraform apply workflow for main branch</strike>
 - [X] **`Task 3`**: <strike>Add security scanning with Checkov</strike>
-- [ ] **`Task 4`**: Add Terraform state locking with DynamoDB
-- [ ] **`Task 5`**: Implement multi-environment deployment with workspaces
-- [ ] **`Task 6`**: Add infrastructure testing with Terratest
-- [ ] **`Task 7`**: Implement cost estimation in PR comments
+- [X] **`Task 4`**: <strike>Implement smart change detection for modified workspaces</strike>
+- [X] **`Task 5`**: <strike>Add parallel matrix execution for multiple workspaces</strike>
+- [X] **`Task 6`**: <strike>Separate unit tests into dedicated job for better visibility</strike>
+- [X] **`Task 7`**: <strike>Add automatic workspace name resolution</strike>
+- [ ] **`Task 8`**: Add PR comment with Terraform plan summary
+- [ ] **`Task 9`**: Implement multi-environment deployment (dev/staging/prod)
+- [ ] **`Task 10`**: Add infrastructure testing with Terratest
+- [ ] **`Task 11`**: Implement cost estimation in PR comments
+- [ ] **`Task 12`**: Add drift detection scheduled workflow
 
 ---
 
